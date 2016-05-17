@@ -11,6 +11,8 @@
 # Yogurt 2015.07.30.21:49:00	1.3
 # Yogurt 2015.10.08.10:03:00	1.4
 # Yogurt 2016.05.10.15:33:00	1.5
+# Yogurt 2016.05.17.20:22:00	1.6
+
 
 source "../../lib/aup_ip_generator.tcl"
 
@@ -19,7 +21,7 @@ source "../../lib/aup_ip_generator.tcl"
 # 
 set_module_property DESCRIPTION "Convert Video Data to PAL Output"
 set_module_property NAME dis_pal
-set_module_property VERSION 1.5
+set_module_property VERSION 1.6
 set_module_property GROUP my_ip/video
 set_module_property AUTHOR Yogurt
 set_module_property DISPLAY_NAME dis_pal
@@ -27,6 +29,7 @@ set_module_property DATASHEET_URL "[pwd]/doc/PAL Video Output IP Core.pdf"
 set_module_property INSTANTIATE_IN_SYSTEM_MODULE true
 set_module_property EDITABLE false
 set_module_property ANALYZE_HDL false
+set_module_property VALIDATION_CALLBACK validate
 set_module_property ELABORATION_CALLBACK elaborate
 set_module_property GENERATION_CALLBACK generate
 
@@ -37,6 +40,7 @@ add_file "hdl/dis_pal_decode.v" SYNTHESIS
 add_file "hdl/dis_pal_process_data.v" SYNTHESIS
 add_file "hdl/dis_pal_pixel_fifo.v" SYNTHESIS
 add_file "hdl/dis_pal_buff2pal.v" SYNTHESIS
+add_file "hdl/dis_pal_embedded.v" SYNTHESIS
 
 # 
 # parameters
@@ -102,14 +106,62 @@ set_parameter_property pal_sync_slot AFFECTS_GENERATION true
 set_parameter_property pal_sync_slot VISIBLE true
 set_parameter_property pal_sync_slot ENABLED true
 
-add_parameter EXPORT_CNT boolean false
-set_parameter_property EXPORT_CNT DiSPLAY_NAME "Export Display Cnt"
-set_parameter_property EXPORT_CNT GROUP "Interface"
-set_parameter_property EXPORT_CNT UNITS None
-set_parameter_property EXPORT_CNT AFFECTS_ELABORATION true
-set_parameter_property EXPORT_CNT AFFECTS_GENERATION true
-set_parameter_property EXPORT_CNT VISIBLE true
-set_parameter_property EXPORT_CNT ENABLED true
+add_parameter export_cnt boolean false
+set_parameter_property export_cnt DiSPLAY_NAME "Export Display Cnt"
+set_parameter_property export_cnt GROUP "Interface"
+set_parameter_property export_cnt UNITS None
+set_parameter_property export_cnt AFFECTS_ELABORATION true
+set_parameter_property export_cnt AFFECTS_GENERATION true
+set_parameter_property export_cnt VISIBLE true
+set_parameter_property export_cnt ENABLED true
+
+add_parameter exmedded_pal boolean false
+set_parameter_property exmedded_pal DiSPLAY_NAME "Embed Sync & Blank Signals in Video"
+set_parameter_property exmedded_pal GROUP "Interface"
+set_parameter_property exmedded_pal UNITS None
+set_parameter_property exmedded_pal AFFECTS_ELABORATION true
+set_parameter_property exmedded_pal AFFECTS_GENERATION true
+set_parameter_property exmedded_pal VISIBLE true
+set_parameter_property exmedded_pal ENABLED true
+
+add_parameter mult_pipeline natural 4
+set_parameter_property mult_pipeline DISPLAY_NAME "Mult Unit Pipelines"
+set_parameter_property mult_pipeline GROUP "Pipeline Property"
+set_parameter_property mult_pipeline UNITS None
+set_parameter_property mult_pipeline DISPLAY_UNITS clocks
+set_parameter_property mult_pipeline ALLOWED_RANGES 4:16
+set_parameter_property mult_pipeline AFFECTS_ELABORATION false
+set_parameter_property mult_pipeline AFFECTS_GENERATION true
+set_parameter_property mult_pipeline VISIBLE true
+set_parameter_property mult_pipeline ENABLED false
+
+add_parameter add_pipeline natural 2
+set_parameter_property add_pipeline DISPLAY_NAME "Add Unit Pipelines"
+set_parameter_property add_pipeline GROUP "Pipeline Property"
+set_parameter_property add_pipeline UNITS None
+set_parameter_property add_pipeline DISPLAY_UNITS clocks
+set_parameter_property add_pipeline ALLOWED_RANGES 2:8
+set_parameter_property add_pipeline AFFECTS_ELABORATION false
+set_parameter_property add_pipeline AFFECTS_GENERATION true
+set_parameter_property add_pipeline VISIBLE true
+set_parameter_property add_pipeline ENABLED false
+
+# +-----------------------------------
+# | Validation function
+# | 
+proc validate {} {
+	set exmedded_pal			[get_parameter_value "exmedded_pal"]
+
+	if { $exmedded_pal } {
+		set_parameter_property mult_pipeline ENABLED true
+		set_parameter_property add_pipeline ENABLED true
+	} else {
+		set_parameter_property mult_pipeline ENABLED false
+		set_parameter_property add_pipeline ENABLED false		
+	}
+}
+# | 
+# +-----------------------------------
 
 # 
 # connection point video_clock
@@ -134,7 +186,8 @@ add_interface_port video_reset vst_rst_n reset_n Input 1
 # | 
 proc elaborate {} {
 	set data_width				[get_parameter_value "data_width"]
-	set export_cnt				[get_parameter_value "EXPORT_CNT"]
+	set export_cnt				[get_parameter_value "export_cnt"]
+	set exmedded_pal			[get_parameter_value "exmedded_pal"]
 
 	set clk_fre [ get_interface_property video_clock clockRate ]
 	if { $clk_fre <= 0 } {
@@ -178,8 +231,10 @@ proc elaborate {} {
 	set_interface_property pal_out ENABLED true
 
 	add_interface_port pal_out dis_data export Output $data_width
-	add_interface_port pal_out dis_sync_n export Output 1
-	add_interface_port pal_out dis_blank_n export Output 1
+	if { $exmedded_pal == "false"} {
+		add_interface_port pal_out dis_sync_n export Output 1
+		add_interface_port pal_out dis_blank_n export Output 1
+	}
 
 	if { $export_cnt } {
 		# 
@@ -191,7 +246,6 @@ proc elaborate {} {
 
 		add_interface_port interface_cnt if_cnt_x export Output 10
 		add_interface_port interface_cnt if_cnt_y export Output 10
-		
 	}
 }
 
@@ -202,14 +256,20 @@ proc generate {} {
 	set pal_blank_H_before		[get_parameter_value "pal_blank_H_before"]
 	set pal_dis_x				[get_parameter_value "pal_dis_x"]
 	set pal_sync_slot			[get_parameter_value "pal_sync_slot"]
-	set export_cnt				[get_parameter_value "EXPORT_CNT"]
-
-	set frame_num				[ format "%.0f" [ expr ceil ($clk_fre / 25) ]]
-	set th_unit					[ format "%.0f" [ expr ceil ($clk_fre * 0.000064) ]]
+	set export_cnt				[get_parameter_value "export_cnt"]
+	set exmedded_pal			[get_parameter_value "exmedded_pal"]
+	set mult_pipeline			[get_parameter_value "mult_pipeline"]
+	set add_pipeline			[get_parameter_value "add_pipeline"]
+	
+	set frame_num				[ format "%.0f" [ expr round ($clk_fre / 25) ]]
+	set th_unit					[ format "%.0f" [ expr round ($clk_fre * 0.000064) ]]
 	set th_a					[ expr ($th_unit * 603)]
 	set th_b					[ expr ($th_unit * 1)]
 	set th_c 					[ expr ($th_unit * 290)]
 	set th_d					[ expr ($th_unit * 314)]
+
+	set mult_num				[ format "%.0f" [ expr round ((1<<$data_width) * 0.7) ]]
+	set add_num					[ format "%.0f" [ expr round ((1<<$data_width) * 0.3) ]]
 
 	set data_width_p			"DATA_WIDTH:$data_width"
 	set frame_num_p				"FRAME_NUM:24'd$frame_num"
@@ -218,6 +278,8 @@ proc generate {} {
 	set pal_blank_H_before_p	"PAL_BLANK_H_BEFORE:10'd$pal_blank_H_before"
 	set pal_dis_x_p				"PAL_DIS_X:10'd$pal_dis_x"
 	set pal_sync_slot_p			"PAL_SYNC_SLOT:10'd$pal_sync_slot"
+	set pipeline_p				"EMBEDDED_MULT_PIPE:$mult_pipeline;EMBEDDED_ADD_PIPE:$add_pipeline"
+	set mult_add_num_p			"EMBEDDED_MULT_NUM:$mult_num;EMBEDDED_ADD_NUM:$add_num"
 
 	if { $export_cnt } {
 		set export_cnt_if "EXPORT_CNT:1"
@@ -225,8 +287,14 @@ proc generate {} {
 		set export_cnt_if "EXPORT_CNT:0"
 	}
 
-	set params "$data_width_p;$frame_num_p;$threshold_p;$pal_cnt_x_p;$pal_blank_H_before_p;$pal_dis_x_p;$pal_sync_slot_p"
-	set sections "$export_cnt_if"
+	if { $exmedded_pal } {
+		set exmedded_pal_if "SEPARATE_PAL_OUT:0"
+	} else {
+		set exmedded_pal_if "SEPARATE_PAL_OUT:1"
+	}
+
+	set params "$data_width_p;$frame_num_p;$threshold_p;$pal_cnt_x_p;$pal_blank_H_before_p;$pal_dis_x_p;$pal_sync_slot_p;$pipeline_p;$mult_add_num_p"
+	set sections "$export_cnt_if;$exmedded_pal_if"
 
 	set dest_dir 		[ get_generation_property OUTPUT_DIRECTORY ]
 	set dest_name		[ get_generation_property OUTPUT_NAME ]

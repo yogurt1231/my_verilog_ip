@@ -7,8 +7,12 @@ module dis_pal_top(
 	if_cnt_x, if_cnt_y,
 `endif
 
-	dis_clk, dis_data,
+	dis_clk, dis_data
+
+`ifdef SEPARATE_PAL_OUT
+	,
 	dis_sync_n, dis_blank_n
+`endif
 );
 
 parameter	DATA_WIDTH				= 10;
@@ -24,6 +28,11 @@ parameter	PAL_BLANK_H_BEFORE	= 10'd126;
 parameter	PAL_DIS_X				= 10'd720;
 parameter	PAL_SYNC_SLOT			= 10'd64;
 
+parameter	EMBEDDED_MULT_PIPE	= 4;
+parameter	EMBEDDED_ADD_PIPE		= 2;
+parameter 	EMBEDDED_MULT_NUM		= 716;
+parameter	EMBEDDED_ADD_NUM		= 307;
+
 input 						vst_clk, vst_rst_n;
 input [DATA_WIDTH-1:0]	vst_data;
 input 						vst_valid;
@@ -32,7 +41,10 @@ output 						vst_ready;
 
 input 						dis_clk;
 output [DATA_WIDTH-1:0]	dis_data;
+
+`ifdef SEPARATE_PAL_OUT
 output 						dis_sync_n, dis_blank_n;
+`endif
 
 `ifdef EXPORT_CNT
 output [9:0]	if_cnt_x;
@@ -51,6 +63,9 @@ wire 	[DATA_WIDTH-1:0]	raw_data;
 wire 							raw_valid, raw_ready;
 wire 							raw_startofpacket;
 wire 							raw_endofpackt;
+
+wire [DATA_WIDTH-1:0]	pal_data;
+wire							pal_sync_n, pal_blank_n;
 
 dis_pal_decode #(
 	.DATA_WIDTH(DATA_WIDTH),
@@ -74,7 +89,8 @@ u1(
 	
 	.im_width(),
 	.im_height(),
-	.im_interlaced());
+	.im_interlaced()
+);
 
 dis_pal_process_data #(
 	.DATA_WIDTH(DATA_WIDTH),
@@ -111,7 +127,8 @@ u3 (
 	.rdclk(dis_clk),
 	.rdreq(fifo_rdreq),
 	.q(fifo_q),
-	.aclr(fifo_aclr));
+	.aclr(fifo_aclr)
+);
 
 dis_pal_buff2pal #(
 	.DATA_WIDTH(DATA_WIDTH),
@@ -122,9 +139,9 @@ dis_pal_buff2pal #(
 u4 (
 	.dis_clk(dis_clk),
 	.dis_rst_n(vst_rst_n & dis_rst_n),
-	.dis_data(dis_data),
-	.dis_sync_n(dis_sync_n),
-	.dis_blank_n(dis_blank_n),
+	.dis_data(pal_data),
+	.dis_sync_n(pal_sync_n),
+	.dis_blank_n(pal_blank_n),
 
 `ifdef EXPORT_CNT
 	.if_cnt_x(if_cnt_x),
@@ -135,6 +152,28 @@ u4 (
 `endif
 
 	.fifo_rdreq(fifo_rdreq),
-	.fifo_q(fifo_q));
+	.fifo_q(fifo_q)
+);
+
+`ifdef SEPARATE_PAL_OUT
+assign dis_data = pal_data;
+assign dis_sync_n = pal_sync_n;
+assign dis_blank_n = pal_blank_n;
+`else
+dis_pal_embedded #(
+	.DATA_WIDTH(DATA_WIDTH),
+	.MULT_PIPE(EMBEDDED_MULT_PIPE),
+	.ADD_PIPE(EMBEDDED_ADD_PIPE),
+	.MULT_NUM(EMBEDDED_MULT_NUM),
+	.ADD_NUM(EMBEDDED_ADD_NUM))
+u5 (
+	.clk(dis_clk),
+	.rst_n(vst_rst_n & dis_rst_n),
+	.din_sync_n(pal_sync_n),
+	.din_blank_n(pal_blank_n),
+	.din_data(pal_data),
+	.dout_data(dis_data)
+);
+`endif
 
 endmodule
