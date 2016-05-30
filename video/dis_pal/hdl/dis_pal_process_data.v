@@ -53,7 +53,7 @@ assign dis_x_add = dis_x + 10'd1;
 assign dis_y_add = dis_y + 10'd1;
 
 assign fifo_data = vst_data;
-assign fifo_aclr = ~vst_rst_n;
+assign fifo_aclr = ~vst_rst_n || frame_cnt==THRESHOLD_A || frame_cnt==THRESHOLD_C;
 assign dis_rst_n = rst_state_cnt == 4'h0;
 assign fifo_wrreq = vst_valid & ((frame_th[0] | frame_th[1]) ^ dis_y[0]);
 assign vst_ready = fifo_usedw<=PAL_WIDTH && (frame_th[0] || frame_th[2] || dis_y<10'd576);

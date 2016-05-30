@@ -62,7 +62,7 @@ wire 	[DATA_WIDTH-1:0]	fifo_q;
 wire 	[DATA_WIDTH-1:0]	raw_data;
 wire 							raw_valid, raw_ready;
 wire 							raw_startofpacket;
-wire 							raw_endofpackt;
+wire 							raw_endofpacket;
 
 wire [DATA_WIDTH-1:0]	pal_data;
 wire							pal_sync_n, pal_blank_n;
