@@ -15,7 +15,7 @@
 
 #define IOWR_SCLAER_OUTPUT_WIDTH(base, data)			IOWR(base, 3, data)
 #define IOWR_SCLAER_OUTPUT_HEIGHT(base, data)			IOWR(base, 4, data)
-#define IOWR_SCLAER_EDGE TS(base, data)					IOWR(base, 5, data)
+#define IOWR_SCLAER_EDGE_TS(base, data)					IOWR(base, 5, data)
 #define IOWR_SCLAER_LOWER_BLUR_TS(base, data)			IOWR(base, 6, data)
 #define IOWR_SCLAER_UPPER_BLUR_TS(base, data)			IOWR(base, 7, data)
 #define IOWR_SCLAER_HOR_COE_WR_BANK(base, data)			IOWR(base, 8, data)
