@@ -53,6 +53,7 @@ reg				dout_startofpacket_reg;
 
 reg	[2:0]		state,n_state;
 reg	[3:0]		head_cnt;
+reg 				din_ready_reg;
 wire				global_rst_n;
 
 localparam	IDLE = 3'b001;
@@ -63,7 +64,17 @@ assign dout_data				= din_data;
 assign dout_valid				= state==DATA && din_valid;
 assign dout_startofpacket	= dout_startofpacket_reg & din_valid;
 assign dout_endofpacket		= state==DATA && din_endofpacket;
-assign din_ready				= state!=DATA || dout_ready;
+assign din_ready				= din_ready_reg | dout_ready;
+
+always @(state or n_state)
+begin
+	case(state)
+	IDLE: din_ready_reg = n_state!=DATA;
+	HEAD: din_ready_reg = 1'b1;
+	DATA: din_ready_reg = 1'b0;
+	default: din_ready_reg = 1'b1;
+	endcase
+end
 
 always @(posedge clk or negedge global_rst_n)
 begin

@@ -51,14 +51,6 @@ output [9:0]	if_cnt_x;
 output [9:0]	if_cnt_y;
 `endif
 
-wire	[DATA_WIDTH+1:0]	decode_fifo_q;
-wire	[2:0]					decode_fifo_usedw;
-wire							decode_fifo_rdreq;
-wire							decode_fifo_empty;
-wire							decode_fifo_aclr;
-wire							decode_fifo_ready;
-wire							decode_fifo_valid;
-
 wire 	[DATA_WIDTH-1:0]	fifo_data;
 wire 							fifo_wrreq, fifo_aclr;
 wire 	[9:0]					fifo_usedw;
@@ -68,6 +60,7 @@ wire 							fifo_rdreq;
 wire 	[DATA_WIDTH-1:0]	fifo_q;
 
 wire 	[DATA_WIDTH-1:0]	raw_data;
+wire 							raw_ready;
 wire 							raw_valid;
 wire 							raw_startofpacket;
 wire 							raw_endofpacket;
@@ -91,39 +84,13 @@ u1(
 	
 	.dout_data(raw_data),
 	.dout_valid(raw_valid),
-	.dout_ready(~decode_fifo_usedw[2]),
+	.dout_ready(raw_ready),
 	.dout_startofpacket(raw_startofpacket),
 	.dout_endofpacket(raw_endofpacket),
 	
 	.im_width(),
 	.im_height(),
 	.im_interlaced()
-);
-
-dis_pal_decode_fifo #(
-	.DATA_WIDTH(DATA_WIDTH+2),
-	.USEDW_WIDTH(3))
-u2(
-	.clock(vst_clk),
-	.aclr(decode_fifo_aclr),
-	
-	.wrreq(raw_valid),
-	.data({raw_startofpacket, raw_endofpacket, raw_data}),
-	.rdreq(decode_fifo_rdreq),
-	.q(decode_fifo_q),
-	
-	.empty(decode_fifo_empty),
-	.usedw(decode_fifo_usedw)
-);
-
-dis_pal_read_fifo u3(
-	.clk(vst_clk),
-	.rst_n(vst_rst_n),
-	.fifo_empty(decode_fifo_empty),
-	.vst_ready(decode_fifo_ready),
-	.fifo_rdreq(decode_fifo_rdreq),
-	.vst_valid(decode_fifo_valid),
-	.fifo_aclr(decode_fifo_aclr)
 );
 
 dis_pal_process_data #(
@@ -138,11 +105,11 @@ u4 (
 	.vst_clk(vst_clk),
 	.vst_rst_n(vst_rst_n),
 	
-	.vst_data(decode_fifo_q[DATA_WIDTH-1:0]),
-	.vst_valid(decode_fifo_valid),
-	.vst_startofpacket(decode_fifo_q[DATA_WIDTH+1]),
-	.vst_endofpacket(decode_fifo_q[DATA_WIDTH]),
-	.vst_ready(decode_fifo_ready),
+	.vst_data(raw_data),
+	.vst_valid(raw_valid),
+	.vst_startofpacket(raw_startofpacket),
+	.vst_endofpacket(raw_endofpacket),
+	.vst_ready(raw_ready),
 	
 	.fifo_data(fifo_data),
 	.fifo_wrreq(fifo_wrreq),

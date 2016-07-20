@@ -4,7 +4,7 @@
 
 
 # 
-# dis_pal "dis_pal" v1.4
+# dis_pal "dis_pal" v1.8
 # Yogurt 2015.06.20.15:28:40	1.0
 # Yogurt 2015.07.01.17:42:00	1.1
 # Yogurt 2015.07.07.11:17:00	1.2
@@ -13,6 +13,8 @@
 # Yogurt 2016.05.10.15:33:00	1.5
 # Yogurt 2016.05.17.20:22:00	1.6
 # Yogurt 2016.06.13.10:49:00	1.7
+# Yogurt 2016.07.20.11:17:00	1.8
+# 
 
 
 source "../../lib/aup_ip_generator.tcl"
@@ -22,7 +24,7 @@ source "../../lib/aup_ip_generator.tcl"
 # 
 set_module_property DESCRIPTION "Convert Video Data to PAL Output"
 set_module_property NAME dis_pal
-set_module_property VERSION 1.7
+set_module_property VERSION 1.8
 set_module_property GROUP my_ip/video
 set_module_property AUTHOR Yogurt
 set_module_property DISPLAY_NAME dis_pal
@@ -38,8 +40,6 @@ set_module_property GENERATION_CALLBACK generate
 # file sets
 # 
 add_file "hdl/dis_pal_decode.v" SYNTHESIS
-add_file "hdl/dis_pal_decode_fifo.v" SYNTHESIS
-add_file "hdl/dis_pal_read_fifo.v" SYNTHESIS
 add_file "hdl/dis_pal_process_data.v" SYNTHESIS
 add_file "hdl/dis_pal_pixel_fifo.v" SYNTHESIS
 add_file "hdl/dis_pal_buff2pal.v" SYNTHESIS

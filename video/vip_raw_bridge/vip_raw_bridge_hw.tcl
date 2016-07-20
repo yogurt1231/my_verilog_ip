@@ -6,6 +6,7 @@
 # 
 # vip_raw_bridge "vip_raw_bridge" v1.0
 # Yogurt 2015.10.19.09:47:27
+# Yogurt 2016.07.20.11:14:00
 # 
 
 
@@ -17,7 +18,7 @@ source "../../lib/aup_ip_generator.tcl"
 # 
 set_module_property DESCRIPTION "Convert VIP Video Data to Raw Format"
 set_module_property NAME vip_raw_bridge
-set_module_property VERSION 1.0
+set_module_property VERSION 1.1
 set_module_property GROUP my_ip/video
 set_module_property AUTHOR Yogurt
 set_module_property DISPLAY_NAME vip_raw_bridge
