@@ -23,6 +23,12 @@ module detector_driver_top(
 	input [13:0]	dd_video
 );
 
+/*
+ * register[0][0] go
+ * register[3][0] i2c address
+ * register[4] interline
+ */
+
 parameter FRAME_FRE_CNT	= 32'd120000;
 parameter SEQ_TRT_WIDTH	= 8'd8;
 

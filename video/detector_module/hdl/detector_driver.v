@@ -7,6 +7,12 @@ module detector_driver (
 	dout_startofpacket, dout_endofpacket
 );
 
+/* 
+ * register[0][0]	go
+ * register[0][1]	mode		0-image		1-background
+ * register[1]		background pixel
+ */
+
 parameter DATA_WIDTH = 10;
 parameter FRAME_CNT = 16'd25614;
 
