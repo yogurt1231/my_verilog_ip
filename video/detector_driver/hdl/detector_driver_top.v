@@ -1,98 +1,92 @@
 module detector_driver_top(
-	input 			clk,
-	input 			rst_n,
+	input 				clk,
+	input 				rst_n,
 	
-	input [2:0]		av_address,
-	input 			av_read,
-	output [31:0]	av_readdata,
-	input 			av_write,
-	input [31:0]	av_writedata,
+	input [2:0]			av_address,
+	input 				av_read,
+	output reg [31:0]	av_readdata,
+	input 				av_write,
+	input [31:0]		av_writedata,
 
-	output 			dout_startofpacket,
-	output 			dout_endofpacket,
-	output 			dout_valid,
-	output [13:0]	dout_data,
+	output 				dout_startofpacket,
+	output 				dout_endofpacket,
+	output 				dout_valid,
+	output [13:0]		dout_data,
 
-	output 			dd_nrst,
-	output 			dd_i2cad,
-	output 			dd_seq_trigger,
-	
-	input 			dd_psync,
-	input 			dd_hsync,
-	input 			dd_vsync,
-	input [13:0]	dd_video
+	output reg			dd_nrst,
+	output reg			dd_i2cad,
+
+	input 				dd_psync,
+	input 				dd_hsync,
+	input 				dd_vsync,
+	input [13:0]		dd_video
 );
 
 /*
- * register[0][0] go
- * register[3][0] i2c address
- * register[4] interline
+ * register[0][0]	go
+ * register[1]		vtemp
+ * register[3][0]	i2c_address
  */
 
-parameter FRAME_FRE_CNT	= 32'd120000;
-parameter SEQ_TRT_WIDTH	= 8'd8;
+parameter AD_DELAY = 5;
 
-wire [31:0] registers [7:0];
-wire [15:0]	video_data;
+wire [13:0]	vtemp_reg;
+wire 			int_startofpacket;
+wire 			int_endofpacket;
+wire 			int_valid;
 
-detector_avalon_slave #(
-	.ADDR_WIDTH(3),
-	.REGS_STATE(8'h00),
-	.REGS_NUM(8)
-u1 (
-	.clk(clk),
-	.rst_n(rst_n),
+always @(posedge clk or negedge rst_n)
+begin
+	if (!rst_n) begin
+		dd_nrst <= 1'b0;
+		dd_i2cad <= 1'b0;
+	end
+	else if (av_write) begin
+		case (av_address)
+		3'd0: dd_nrst <= av_writedata[0];
+		3'd3: dd_i2cad <= av_writedata[0];
+		endcase
+	end
+end
 
-	.av_address(av_address),
-	.av_read(av_read),
-	.av_write(av_write),
-	.av_readdata(av_readdata),
-	.av_writedata(av_writedata),
-	
-	.register_signal_in(),
-	.register_signal_out({registers[7],
-								registers[6],
-								registers[5],
-								registers[4],
-								registers[3],
-								registers[2],
-								registers[1],
-								registers[0]})
-);
+always @(posedge clk or negedge rst_n)
+begin
+	if (!rst_n)
+		av_readdata <= 32'd0;
+	else if (av_read) begin
+		case (av_address)
+		3'd0: av_readdata <= {31'd0, dd_nrst};
+		3'd1: av_readdata <= {18'd0, vtemp_reg};
+		3'd3: av_readdata <= {31'd0, dd_i2cad};
+		default: av_readdata <= 32'd0;
+		endcase
+	end
+end
 
-detector_ddio_in u2(
-	.inclock(dd_psync),
-	.aclr(~rst_n),
-	
-	.datain(dd_video),
-
-	.dataout_h(video_data[7:0]),
-	.dataout_l(video_data[15:8])
-);
-
-detector_driver #(
-	.FRAME_FRE_CNT(FRAME_FRE_CNT),
-	.SEQ_TRT_WIDTH(SEQ_TRT_WIDTH))
-u3 (
+detector_driver u3(
 	.clk(dd_psync),
 	.rst_n(rst_n),
-		
-	.reset_n_reg(registers[0][0]),
-	.i2c_address_reg(registers[3][0]),
-	.interline_reg(registers[4]),
 
-	.dout_startofpacket(dout_startofpacket),
-	.dout_endofpacket(dout_endofpacket),
-	.dout_valid(dout_valid),
+	.vtemp_reg(vtemp_reg),
+	
+	.dout_startofpacket(int_startofpacket),
+	.dout_endofpacket(int_endofpacket),
+	.dout_valid(int_valid),
 	.dout_data(dout_data),
-
-	.dd_nrst(dd_nrst),
-	.dd_i2cad(dd_i2cad),
-	.dd_seq_trigger(dd_seq_trigger),
-		
+	
 	.dd_hsync(dd_hsync),
 	.dd_vsync(dd_vsync),
-	.dd_video(video_data[13:0])
+	.dd_video(dd_video)
+);
+
+detector_delay #(
+	.DATA_WIDTH(3),
+	.DELAY_CYCLE(AD_DELAY))
+u4 (
+	.clk(dd_psync),
+	.rst_n(rst_n),
+	.datain({int_startofpacket, int_endofpacket, int_valid}),
+	.dataout({dout_startofpacket, dout_endofpacket, dout_valid})
 );
 
 endmodule

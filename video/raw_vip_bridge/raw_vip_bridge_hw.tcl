@@ -4,11 +4,12 @@
 
 
 # 
-# raw_vip_bridge "raw_vip_bridge" v1.3
+# raw_vip_bridge "raw_vip_bridge" v1.4
 # Yogurt 2015.07.22.15:42:04
 # Yogurt 2015.09.01.10:29:00
 # Yogurt 2015.09.08.10:59:00
 # Yogurt 2015.10.19.17:09:00
+# Yogurt 2016.09.04.20:04:00
 
 
 source "../../lib/aup_ip_generator.tcl"
@@ -18,7 +19,7 @@ source "../../lib/aup_ip_generator.tcl"
 # 
 set_module_property DESCRIPTION "Convert Raw Video Data to VIP Format"
 set_module_property NAME raw_vip_bridge
-set_module_property VERSION 1.3
+set_module_property VERSION 1.4
 set_module_property GROUP my_ip/video
 set_module_property AUTHOR Yogurt
 set_module_property DISPLAY_NAME raw_vip_bridge
@@ -90,9 +91,18 @@ set_parameter_property fifo_depth GROUP "FIFO Setting"
 set_parameter_property fifo_depth UNITS None
 set_parameter_property fifo_depth AFFECTS_ELABORATION true
 set_parameter_property fifo_depth AFFECTS_GENERATION true
-set_parameter_property fifo_depth ALLOWED_RANGES {256 512 1024 2048 4096 8192 16384 32768}
+set_parameter_property fifo_depth ALLOWED_RANGES {256 512 1024 2048 4096 8192 16384 32768 65536 131072}
 set_parameter_property fifo_depth VISIBLE true
 set_parameter_property fifo_depth ENABLED true
+
+add_parameter buffer_num INTEGER 1024
+set_parameter_property buffer_num DISPLAY_NAME "FIFO Buffer Pixels"
+set_parameter_property buffer_num GROUP "FIFO Setting"
+set_parameter_property buffer_num UNITS None
+set_parameter_property buffer_num AFFECTS_ELABORATION false
+set_parameter_property buffer_num AFFECTS_GENERATION true
+set_parameter_property buffer_num VISIBLE true
+set_parameter_property buffer_num ENABLED true
 
 add_parameter fifo_use boolean false
 set_parameter_property fifo_use DiSPLAY_NAME "Export FIFO Usedw"
@@ -160,6 +170,8 @@ set_parameter_property control_mode ENABLED false
 proc validate {} {
 	set data_mode				[ get_parameter_value "data_mode" ]
 	set runtime_control			[ get_parameter_value "runtime_control"]
+	set fifo_depth				[ get_parameter_value "fifo_depth"]
+	set buffer_num				[ get_parameter_value "buffer_num"]
 
 	if { $data_mode == 3 } {
 		set_parameter_property same_clk ENABLED false
@@ -175,6 +187,10 @@ proc validate {} {
 		set_parameter_property control_mode ENABLED true
 	} else {
 		set_parameter_property control_mode ENABLED false
+	}
+
+	if { $fifo_depth <= $buffer_num} {
+		send_message error "The Buffer Pixles Must Not Bigger Than FIFO Depth."
 	}
 
 }
@@ -412,6 +428,7 @@ proc generate {} {
 	set data_mode				[ get_parameter_value "data_mode" ]
 	set same_clk				[ get_parameter_value "same_clk"]
 	set fifo_depth				[ get_parameter_value "fifo_depth"]
+	set buffer_num				[ get_parameter_value "buffer_num"]
 	set fifo_use				[ get_parameter_value "fifo_use"]
 	set video_width				[ get_parameter_value "video_width"]
 	set video_height			[ get_parameter_value "video_height"]
@@ -426,6 +443,7 @@ proc generate {} {
 	set data_bits_p				"DATA_BITS:$data_bits"
 	set data_planes_p			"DATA_PLANES:$data_planes"
 	set fifo_use_width_p		"FIFO_USED_WIDTH:$fifo_use_width"
+	set buffer_num_p			"FIFO_BUFFER_NUM:$buffer_num"
 	set vip_width_p				"VIP_WIDTH:16'd$video_width"
 	set vip_height_p			"VIP_HEIGHT:16'd$video_height"
 	set vip_interlaced_p		"VIP_INTERLACED:4'b$video_interlaced"
@@ -475,7 +493,7 @@ proc generate {} {
 		set export_inf_if				"EXPORT_INF:0"	
 	}
 
-	set params "$data_width_p;$data_bits_p;$data_planes_p;$fifo_use_width_p;$vip_width_p;$vip_height_p;$vip_interlaced_p"
+	set params "$data_width_p;$data_bits_p;$data_planes_p;$fifo_use_width_p;$buffer_num_p;$vip_width_p;$vip_height_p;$vip_interlaced_p"
 	set sections "$datain_mod_fs_same_clk_if;$datain_mod_fs_not_same_clk_if;$datain_mod_part_st_same_clk_if;$datain_mod_part_st_not_same_clk_if;$datain_mod_raw_st_if;$runtime_control_if;$export_inf_if;$fifo_usedw_if"
 
 	set dest_dir 		[ get_generation_property OUTPUT_DIRECTORY ]

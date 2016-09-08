@@ -4,9 +4,9 @@
 
 
 # 
-# image_store "image_store" v1.0
+# image_store "image_store" v1.1
 # Yogurt 2016.07.21.17:55:32
-# 
+# Yogurt 2016.09.06.16:46:00
 # 
 
 
@@ -17,13 +17,14 @@ source "../../lib/aup_ip_generator.tcl"
 # 
 set_module_property DESCRIPTION "Store Avalon-ST Format Image"
 set_module_property NAME image_store
-set_module_property VERSION 1.0
+set_module_property VERSION 1.1
 set_module_property GROUP my_ip/video
 set_module_property AUTHOR Yogurt
 set_module_property DISPLAY_NAME image_store
 set_module_property INSTANTIATE_IN_SYSTEM_MODULE true
 set_module_property EDITABLE false
 set_module_property ANALYZE_HDL false
+set_module_property VALIDATION_CALLBACK validate
 set_module_property ELABORATION_CALLBACK elaborate
 set_module_property GENERATION_CALLBACK generate
 
@@ -35,6 +36,7 @@ add_file "hdl/image_store_avalon_master.v" SYNTHESIS
 add_file "hdl/image_store_avalon_slave.v" SYNTHESIS
 add_file "hdl/image_store_decode.v" SYNTHESIS
 add_file "hdl/image_store_splite.v" SYNTHESIS
+add_file "hdl/image_store_fifo.v" SYNTHESIS
 
 
 # 
@@ -69,6 +71,15 @@ set_parameter_property store_width AFFECTS_GENERATION true
 set_parameter_property store_width ALLOWED_RANGES {2 4 8 16 32}
 set_parameter_property store_width VISIBLE true
 set_parameter_property store_width ENABLED true
+
+proc validate {} {
+	set data_width				[ get_parameter_value "data_width"]
+	set dout_width				[ get_parameter_value "dout_width"]
+
+	if { $data_width < $dout_width} {
+		send_message error "The Master Port Width Must Not Bigger Than Video Width."
+	}
+}
 
 # +-----------------------------------
 # | Elaboration function
@@ -203,14 +214,18 @@ proc generate {} {
 	set data_width				[ get_parameter_value "data_width"]
 	set dout_width				[ get_parameter_value "dout_width"]
 	set store_width				[ get_parameter_value "store_width"]
+	set din_log					[ format "%.0f" [ expr ceil (log($dout_width) / (log (2))) ]]
 	set data_log 				[ format "%.0f" [ expr ceil (log($data_width) / (log (2))) ]]
 	set store_log				[ format "%.0f" [ expr ceil (log($store_width) / (log (2))) ]]
+	set fifo_usedw_min			[ expr ($data_log - $din_log)]
 
-	set data_log_p				"AVM_WIDTH_LOG:$data_log"
 	set dout_width_p			"DATA_WIDTH:$dout_width"
+	set din_log_p				"DIN_WIDTH:$din_log"
+	set data_log_p				"AVM_WIDTH_LOG:$data_log"
+	set fifo_usedw_min_p		"USEDW_MIN:$fifo_usedw_min"
 	set store_log_p				"STORE_WIDTH:$store_log"
 
-	set params 					"$data_log_p;$dout_width_p;$store_log_p"
+	set params 					"$dout_width_p;$din_log_p;$data_log_p;$fifo_usedw_min_p;$store_log_p"
 	set sections				""
 
 	set dest_dir 				[ get_generation_property OUTPUT_DIRECTORY ]

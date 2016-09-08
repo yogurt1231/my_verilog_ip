@@ -7,7 +7,7 @@ module dis_pal_process_data(
 	fifo_data, fifo_wrreq,
 	fifo_usedw, fifo_aclr,
 	
-	dis_rst_n
+	dis_clk, dis_rst_n
 );
 
 parameter			DATA_WIDTH	= 10;
@@ -18,6 +18,9 @@ parameter [23:0]	THRESHOLD_A	= 1_929_600;
 parameter [23:0]	THRESHOLD_B	= 0_003_200;
 parameter [23:0]	THRESHOLD_C	= 0_928_000;
 parameter [23:0]	THRESHOLD_D	= 1_004_800;
+
+localparam [23:0]	THRESHOLD_FIFO_RST_A = THRESHOLD_A - 24'd8;
+localparam [23:0]	THRESHOLD_FIFO_RST_C = THRESHOLD_C - 24'd8;
 
 input 						vst_clk;
 input 						vst_rst_n;
@@ -33,11 +36,14 @@ output 						fifo_wrreq;
 input [9:0]					fifo_usedw;
 output 						fifo_aclr;
 
+input 						dis_clk;
 output 						dis_rst_n;
 
 reg [3:0]	rst_state_cnt;
 reg [9:0]	dis_x, dis_y;
 reg [23:0]	frame_cnt;
+reg 			dis_rst_n_reg;
+reg 			fifo_aclr_reg;
 
 wire [23:0]	frame_add;
 wire [3:0]	frame_th;
@@ -53,10 +59,28 @@ assign dis_x_add = dis_x + 10'd1;
 assign dis_y_add = dis_y + 10'd1;
 
 assign fifo_data = vst_data;
-assign fifo_aclr = ~vst_rst_n || (frame_cnt+24'd6)==THRESHOLD_A || (frame_cnt+24'd6)==THRESHOLD_C;
-assign dis_rst_n = rst_state_cnt == 4'h0;
+assign fifo_aclr = ~vst_rst_n | fifo_aclr_reg;
 assign fifo_wrreq = vst_valid & ((frame_th[0] | frame_th[1]) ^ dis_y[0]);
 assign vst_ready = fifo_usedw<=PAL_WIDTH && (frame_th[0] || frame_th[2] || dis_y<10'd576);
+assign dis_rst_n = dis_rst_n_reg;
+
+always @(posedge vst_clk or negedge vst_rst_n)
+begin
+	if (!vst_rst_n)
+		fifo_aclr_reg <= 1'b0;
+	else if (frame_cnt==THRESHOLD_FIFO_RST_A || frame_cnt==THRESHOLD_FIFO_RST_C)
+		fifo_aclr_reg <= 1'b1;
+	else
+		fifo_aclr_reg <= 1'b0;
+end
+
+always @(posedge dis_clk or negedge vst_rst_n)
+begin
+	if (!vst_rst_n)
+		dis_rst_n_reg <= 1'b0;
+	else
+		dis_rst_n_reg <= rst_state_cnt==4'h0;
+end
 
 always @(posedge vst_clk or negedge vst_rst_n)
 begin

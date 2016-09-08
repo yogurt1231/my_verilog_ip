@@ -14,9 +14,18 @@ module image_store_top(
 	avs_write, avs_writedata
 );
 
+/*
+ * register[0][0]	store enable
+ * register[1]		reserve
+ * register[2]		write address
+ * register[3]		write frames count
+ */
+
 parameter DATA_WIDTH		= 10;
-parameter AVM_WIDTH_LOG	= 4;
-parameter STORE_WIDTH	= 4;
+parameter DIN_WIDTH_LOG	= 4;
+parameter AVM_WIDTH_LOG	= 6;
+parameter USEDW_MIN		= 2;
+parameter STORE_WIDTH	= 3;
 
 input clk, rst_n;
 
@@ -103,7 +112,7 @@ u_splite(
 
 image_store_decode #(
 	.DATA_WIDTH(DATA_WIDTH),
-	.COLOR_BITS(1),
+	.COLOR_BITS(DATA_WIDTH),
 	.COLOR_PLANES(1))
 u_decode(
 	.clk(clk),
@@ -123,8 +132,10 @@ u_decode(
 );
 
 image_store_avalon_master #(
-	.DIN_WIDTH(DATA_WIDTH),
+	.DATA_WIDTH(DATA_WIDTH),
+	.DIN_WIDTH_LOG(DIN_WIDTH_LOG),
 	.AVM_WIDTH_LOG(AVM_WIDTH_LOG),
+	.USEDW_MIN(USEDW_MIN),
 	.STORE_WIDTH(STORE_WIDTH))
 u_master(
 	.clk(clk),

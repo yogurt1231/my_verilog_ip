@@ -40,6 +40,7 @@ parameter								DATA_BITS				= 8;
 parameter								DATA_PLANES				= 1;
 
 parameter								FIFO_USED_WIDTH		= 12;
+parameter								FIFO_BUFFER_NUM		= 1024;
 
 parameter								VIP_WIDTH				= 16'd720;
 parameter								VIP_HEIGHT				= 16'd576;
@@ -112,15 +113,22 @@ u2 (
 	.q({rst_startofpacket,rst_endofpacket,rst_data}),
 	.empty(fifo_empty),
 	.usedw(fifo_usedw));
-
-rvbridge_read_fifo u3(
+	
+rvbridge_read_fifo #(
+	.FIFO_USED_WIDTH(FIFO_USED_WIDTH),
+	.FIFO_BUFFER_NUM(FIFO_BUFFER_NUM))
+u3 (
 	.clk(vst_clk),
 	.rst_n(global_rst_n),
-	.fifo_empty(fifo_empty),
-	.vst_ready(rst_ready),
+	
+	.fifo_aclr(fifo_aclr),
 	.fifo_rdreq(fifo_rdreq),
-	.vst_valid(rst_valid),
-	.fifo_aclr(fifo_aclr));
+	.fifo_empty(fifo_empty),
+	.fifo_usedw(fifo_usedw),
+	
+	.vst_ready(rst_ready),
+	.vst_valid(rst_valid)
+);
 `endif
 
 `ifdef DATAIN_MOD_PART_ST_SAME_CLOCK
@@ -143,14 +151,21 @@ u2 (
 	.empty(fifo_empty),
 	.usedw(fifo_usedw));
 
-rvbridge_read_fifo u3(
+rvbridge_read_fifo #(
+	.FIFO_USED_WIDTH(FIFO_USED_WIDTH),
+	.FIFO_BUFFER_NUM(FIFO_BUFFER_NUM))
+u3 (
 	.clk(vst_clk),
 	.rst_n(global_rst_n),
-	.fifo_empty(fifo_empty),
-	.vst_ready(rst_ready),
+	
+	.fifo_aclr(fifo_aclr),
 	.fifo_rdreq(fifo_rdreq),
-	.vst_valid(rst_valid),
-	.fifo_aclr(fifo_aclr));
+	.fifo_empty(fifo_empty),
+	.fifo_usedw(fifo_usedw),
+	
+	.vst_ready(rst_ready),
+	.vst_valid(rst_valid)
+);
 `endif
 
 `ifdef DATAIN_MOD_FS_NOT_SAME_CLOCK
@@ -190,14 +205,21 @@ u2 (
 	.rdempty(fifo_empty),
 	.rdusedw(fifo_usedw));
 
-rvbridge_read_fifo u3(
+rvbridge_read_fifo #(
+	.FIFO_USED_WIDTH(FIFO_USED_WIDTH),
+	.FIFO_BUFFER_NUM(FIFO_BUFFER_NUM))
+u3 (
 	.clk(vst_clk),
 	.rst_n(global_rst_n),
-	.fifo_empty(fifo_empty),
-	.vst_ready(rst_ready),
+	
+	.fifo_aclr(fifo_aclr),
 	.fifo_rdreq(fifo_rdreq),
-	.vst_valid(rst_valid),
-	.fifo_aclr(fifo_aclr));
+	.fifo_empty(fifo_empty),
+	.fifo_usedw(fifo_usedw),
+	
+	.vst_ready(rst_ready),
+	.vst_valid(rst_valid)
+);
 `endif
 
 `ifdef DATAIN_MOD_PART_ST_NOT_SAME_CLOCK
@@ -222,14 +244,21 @@ u2 (
 	.rdempty(fifo_empty),
 	.rdusedw(fifo_usedw));
 
-rvbridge_read_fifo u3(
+rvbridge_read_fifo #(
+	.FIFO_USED_WIDTH(FIFO_USED_WIDTH),
+	.FIFO_BUFFER_NUM(FIFO_BUFFER_NUM))
+u3 (
 	.clk(vst_clk),
 	.rst_n(global_rst_n),
-	.fifo_empty(fifo_empty),
-	.vst_ready(rst_ready),
+	
+	.fifo_aclr(fifo_aclr),
 	.fifo_rdreq(fifo_rdreq),
-	.vst_valid(rst_valid),
-	.fifo_aclr(fifo_aclr));
+	.fifo_empty(fifo_empty),
+	.fifo_usedw(fifo_usedw),
+	
+	.vst_ready(rst_ready),
+	.vst_valid(rst_valid)
+);
 `endif
 
 `ifdef DATAIN_MOD_RAW_ST

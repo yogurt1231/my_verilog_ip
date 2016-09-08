@@ -116,6 +116,7 @@ u4 (
 	.fifo_aclr(fifo_aclr),
 	.fifo_usedw(fifo_usedw),
 
+	.dis_clk(dis_clk),
 	.dis_rst_n(dis_rst_n));
 
 dis_pal_pixel_fifo #(
