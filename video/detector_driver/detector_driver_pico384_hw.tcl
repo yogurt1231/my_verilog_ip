@@ -8,6 +8,7 @@
 # Detector Driver for PICO384
 # Yogurt 2016.06.16.16:41:10	1.0
 # Yogurt 2016.09.03.16:44:00	1.1
+# Yogurt 2016.09.08.16:48:00	1.2
 # 
 
 source "../../lib/aup_ip_generator.tcl"
@@ -17,7 +18,7 @@ source "../../lib/aup_ip_generator.tcl"
 # 
 set_module_property DESCRIPTION "Detector Driver for PICO384"
 set_module_property NAME detector_driver_pico384
-set_module_property VERSION 1.1
+set_module_property VERSION 1.2
 set_module_property GROUP my_ip/video
 set_module_property AUTHOR Yogurt
 set_module_property DISPLAY_NAME detector_driver_pico384

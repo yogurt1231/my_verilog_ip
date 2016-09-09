@@ -1,4 +1,4 @@
-module detector_driver_top(
+module system_qsys_detector_driver (
 	input 				clk,
 	input 				rst_n,
 	
@@ -26,6 +26,8 @@ module detector_driver_top(
  * register[0][0]	go
  * register[1]		vtemp
  * register[3][0]	i2c_address
+ * register[4][0]	output select 0-background 1-video
+ * register[5]		background
  */
 
 parameter AD_DELAY = 5;
@@ -35,16 +37,27 @@ wire 			int_startofpacket;
 wire 			int_endofpacket;
 wire 			int_valid;
 
+wire [13:0]	video_data;
+
+reg 			output_select;
+reg [13:0]	background;
+
+assign dout_data = output_select ? video_data : background;
+
 always @(posedge clk or negedge rst_n)
 begin
 	if (!rst_n) begin
 		dd_nrst <= 1'b0;
 		dd_i2cad <= 1'b0;
+		output_select <= 1'b0;
+		background <= 14'd0;
 	end
 	else if (av_write) begin
 		case (av_address)
 		3'd0: dd_nrst <= av_writedata[0];
 		3'd3: dd_i2cad <= av_writedata[0];
+		3'd4: output_select <= av_writedata[0];
+		3'd5: background <= av_writedata[13:0];
 		endcase
 	end
 end
@@ -72,7 +85,7 @@ detector_driver u3(
 	.dout_startofpacket(int_startofpacket),
 	.dout_endofpacket(int_endofpacket),
 	.dout_valid(int_valid),
-	.dout_data(dout_data),
+	.dout_data(video_data),
 	
 	.dd_hsync(dd_hsync),
 	.dd_vsync(dd_vsync),
