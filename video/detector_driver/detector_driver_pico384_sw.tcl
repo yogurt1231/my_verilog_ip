@@ -9,7 +9,7 @@ create_driver detector_driver_pico384_driver
 set_sw_property hw_class_name detector_driver_pico384
 
 # The version of this driver
-set_sw_property version 1.2
+set_sw_property version 1.3
 
 # This driver may be incompatible with versions of hardware less
 # than specified below. Updates to hardware and device drivers
@@ -18,7 +18,7 @@ set_sw_property version 1.2
 #
 # Multiple-Version compatibility was introduced in version 11.0;
 # prior versions are therefore excluded.
-set_sw_property min_compatible_hw_version 1.1
+set_sw_property min_compatible_hw_version 1.3
 
 # Initialize the driver in alt_sys_init()
 set_sw_property auto_initialize false
