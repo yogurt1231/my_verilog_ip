@@ -19,7 +19,7 @@ source "../../lib/aup_ip_generator.tcl"
 # 
 set_module_property DESCRIPTION "Generate OSD Video"
 set_module_property NAME osd_generater
-set_module_property VERSION 1.1
+set_module_property VERSION 1.2
 set_module_property GROUP my_ip/video
 set_module_property AUTHOR Yogurt
 set_module_property DISPLAY_NAME osd_generater
@@ -138,7 +138,7 @@ proc elaborate {} {
 	set_interface_property read_master doStreamWrites false
 	set_interface_property read_master holdTime 0
 	set_interface_property read_master linewrapBursts false
-	set_interface_property read_master maximumPendingReadTransactions 0
+	set_interface_property read_master maximumPendingReadTransactions 1
 	set_interface_property read_master readLatency 0
 	set_interface_property read_master readWaitTime 0
 	set_interface_property read_master setupTime 0
