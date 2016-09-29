@@ -9,6 +9,7 @@
 # Yogurt
 # 2016.05.08.20:58:13	1.0
 # 2016.07.22.17:02:00	1.1
+# 2016.09.29.21:45:00	1.2
 #
 
 source "../../lib/aup_ip_generator.tcl"
@@ -140,7 +141,7 @@ proc elaborate {} {
 	set_interface_property read_master linewrapBursts false
 	set_interface_property read_master maximumPendingReadTransactions 1
 	set_interface_property read_master readLatency 0
-	set_interface_property read_master readWaitTime 0
+	set_interface_property read_master readWaitTime 1
 	set_interface_property read_master setupTime 0
 	set_interface_property read_master timingUnits Cycles
 	set_interface_property read_master writeWaitTime 0
