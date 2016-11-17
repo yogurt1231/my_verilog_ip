@@ -16,7 +16,7 @@ module image_store_top(
 
 /*
  * register[0][0]	store enable
- * register[1]		reserve
+ * register[1]		reverse
  * register[2]		write address
  * register[3]		write frames count
  */

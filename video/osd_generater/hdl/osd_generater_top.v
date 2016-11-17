@@ -40,7 +40,7 @@ output 						dout_endofpacket;
 
 /*
  * register[0][0]	go
- * register[1]		reserve
+ * register[1]		reverse
  * register[2]		read address
  * register[3]		osd pixels
  * register[4]		osd width

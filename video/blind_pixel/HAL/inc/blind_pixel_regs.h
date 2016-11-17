@@ -10,10 +10,10 @@
 
 #include <io.h>
 
-#define BLIND_PIXEL_VIDEP		0x00
-#define BLIND_PIXEL_ENABLE 		0x01
-#define BLIND_PIXEL_BACKGROUND	0x02
-#define BLIND_PIXEL_TEST		0x03
+#define BLIND_PIXEL_MODE_VIDEO			0x00
+#define BLIND_PIXEL_MODE_ENABLE 		0x01
+#define BLIND_PIXEL_MODE_BACKGROUND		0x02
+#define BLIND_PIXEL_MODE_TEST			0x03
 
 #define IOWR_BLINX_PIXEL_CONTROL(base, data)			IOWR(base, 0, data)
 #define IOWR_BLINX_PIXEL_BACKGROUND(base, data)			IOWR(base, 3, data)
